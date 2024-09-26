@@ -76,6 +76,8 @@ pub enum Backend {
     ///
     /// **Note**: "unstable" here refers to the protocol itself, not to the stability of its integration into this crate!
     WaylandTabletUnstableV2,
+    /// [`XInput2`](https://www.x.org/releases/X11R7.7/doc/inputproto/XI2proto.txt)
+    XorgXInput2,
     /// [`RealTimeStylus`](https://learn.microsoft.com/en-us/windows/win32/tablet/realtimestylus-reference)
     ///
     /// The use of this interface avoids some common problems with the use of Windows Ink in drawing applications,
@@ -124,6 +126,8 @@ impl Manager {
         match self.internal {
             #[cfg(wl_tablet)]
             platform::PlatformManager::Wayland(_) => Backend::WaylandTabletUnstableV2,
+            #[cfg(xinput2)]
+            platform::PlatformManager::XInput2(_) => Backend::XorgXInput2,
             #[cfg(ink_rts)]
             platform::PlatformManager::Ink(_) => Backend::WindowsInkRealTimeStylus,
         }

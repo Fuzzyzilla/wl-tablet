@@ -159,6 +159,7 @@ impl Painter {
                     }
                     // Positioning data, continue drawing!
                     ToolEvent::Pose(mut pose) => {
+                        println!("{:?} - x {}", tool.name, pose.position[0]);
                         // If there's a painter, paint on it!
                         // If not, we haven't hit the `Down` event yet.
                         if let Some(painter) = self.tools.get_mut(&tool.id()) {
@@ -199,6 +200,7 @@ fn main() {
     let event_loop = winit::event_loop::EventLoopBuilder::<()>::default()
         .build()
         .expect("start event loop");
+    event_loop.listen_device_events(winit::event_loop::DeviceEvents::Always);
     let window = std::sync::Arc::new(
         winit::window::WindowBuilder::default()
             .with_inner_size(PhysicalSize::new(512u32, 512u32))
@@ -209,10 +211,17 @@ fn main() {
 
     // To allow us to draw on the screen without pulling in a whole GPU package,
     // we use `softbuffer` for presentation and `tiny-skia` for drawing
-    let mut pixmap = tiny_skia::Pixmap::new(512, 512).unwrap();
+    let mut pixmap =
+        tiny_skia::Pixmap::new(window.inner_size().width, window.inner_size().height).unwrap();
     let softbuffer = softbuffer::Context::new(window.as_ref()).expect("init softbuffer");
     let mut surface =
         softbuffer::Surface::new(&softbuffer, &window).expect("make presentation surface");
+    surface
+        .resize(
+            window.inner_size().width.try_into().unwrap(),
+            window.inner_size().height.try_into().unwrap(),
+        )
+        .unwrap();
 
     // Fetch the tablets, using our window's handle for access.
     // Since we `Arc'd` our window, we get the safety of `build_shared`. Where this is not possible,

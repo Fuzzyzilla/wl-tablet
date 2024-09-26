@@ -252,7 +252,7 @@ impl<'manager> EventIterator<'manager> {
                                 .tablets()
                                 .iter()
                                 .find(|t| t.internal_id == tablet)
-                                .unwrap(),
+                                .ok_or(())?,
                         },
                         RawTool::Down => ToolEvent::Down,
                         RawTool::Button { button_id, pressed } => ToolEvent::Button {

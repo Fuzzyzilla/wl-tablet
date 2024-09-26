@@ -53,14 +53,12 @@ impl EventFilter {
             },
             Event::Tablet { .. } => true,
             Event::Pad { event, .. } => match event {
-                PadEvent::Group { event, .. } => match event {
-                    PadGroupEvent::Ring { event, .. } | PadGroupEvent::Strip { event, .. } => {
-                        match event {
-                            TouchStripEvent::Frame(..) => self.frames,
-                            TouchStripEvent::Pose(..) => self.poses,
-                            _ => true,
-                        }
-                    }
+                PadEvent::Group {
+                    event: PadGroupEvent::Ring { event, .. } | PadGroupEvent::Strip { event, .. },
+                    ..
+                } => match event {
+                    TouchStripEvent::Frame(..) => self.frames,
+                    TouchStripEvent::Pose(..) => self.poses,
                     _ => true,
                 },
                 _ => true,
@@ -215,6 +213,8 @@ impl eframe::App for Viewer {
                 });
         });
 
+        // Set the scale factor. Notably, this does *not* include the window's scale factor!
+        self.state.egui_scale_factor = ctx.zoom_factor();
         // update the state with the new events!
         self.state.extend(events);
 

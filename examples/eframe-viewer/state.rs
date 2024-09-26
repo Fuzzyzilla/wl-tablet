@@ -38,7 +38,6 @@ fn radial_delta(from: f32, to: f32) -> f32 {
     nearest_delta.unwrap()
 }
 
-#[derive(Default)]
 pub struct State {
     /// State of any `In` tools, removed when they go `Out`.
     /// Note that this isn't a singleton! Several tools can be active at the same time
@@ -49,6 +48,20 @@ pub struct State {
     strips: collections::HashMap<pad::strip::ID, f32>,
     /// The position of a virtual knob to show off slider/ring states.
     knob_pos: f32,
+    /// Egui's scale factor. octotablet gives us positions in logical window space, but we need
+    /// to draw in egui's coordinate space.
+    pub egui_scale_factor: f32,
+}
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            tools: collections::HashMap::new(),
+            rings: collections::HashMap::new(),
+            strips: collections::HashMap::new(),
+            knob_pos: 0.0,
+            egui_scale_factor: 1.0,
+        }
+    }
 }
 impl<'a> Extend<octotablet::events::Event<'a>> for State {
     fn extend<T: IntoIterator<Item = octotablet::events::Event<'a>>>(&mut self, iter: T) {
@@ -80,10 +93,13 @@ impl<'a> Extend<octotablet::events::Event<'a>> for State {
                         };
                         tool.down = false;
                     }
-                    ToolEvent::Pose(pose) => {
+                    ToolEvent::Pose(mut pose) => {
                         let Some(tool) = self.tools.get_mut(&tool.id()) else {
                             continue;
                         };
+                        // Remap from logical window pixels to egui points.
+                        pose.position[0] /= self.egui_scale_factor;
+                        pose.position[1] /= self.egui_scale_factor;
                         // Limited size circular buf - pop to make room if full.
                         if tool.path.len() == PATH_LEN {
                             tool.path.pop_front();

@@ -36,18 +36,21 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 # Common deps.
 bitflags = "2.4.2"
-enum_dispatch = "0.3.12"
 raw-window-handle = "0.6.0"
 strum = { version = "0.26.2", features = ["derive"] }
 thiserror = "1.0.58"
 smallvec = "1.13.1"
 
-# Wayland `tablet_unstable_v2` deps.
 # Crazy `cfg` stolen verbatim from winit's Cargo.toml as I assume they have more wisdom than I
 [target.'cfg(any(docsrs, all(unix, not(any(target_os = "redox", target_family = "wasm", target_os = "android", target_os = "ios", target_os = "macos")))))'.dependencies]
+# Wayland `tablet_unstable_v2` deps.
 wayland-backend = { version = "0.3.3", features = ["client_system"], optional = true }
 wayland-client = { version = "0.31.2", optional = true }
 wayland-protocols = { version = "0.31.2", features = ["client", "unstable"], optional = true }
+
+# Xorg `xinput2` deps. We use x11rb RustConnection as xcb doesn't support xinput2 out-of-box
+# and xlib cannot be soundly used due to its use of global variables.
+x11rb = { version = "0.13.1", features = ["xinput", "extra-traits"], optional = true }
 
 # Windows Ink `RealTimeStylus`
 [target.'cfg(any(docsrs, target_os = "windows"))'.dependencies.windows]
@@ -62,11 +65,13 @@ features = [
 ]
 
 [features]
-default = ["wayland-tablet-unstable-v2", "windows-ink"]
+default = ["wayland-tablet-unstable-v2", "xorg-xinput2", "windows-ink"]
 
 # Wayland `tablet_unstable_v2` support
 # Note: "unstable" here refers to the protocol itself, not to the stability of it's integration into this crate!
 wayland-tablet-unstable-v2 = ["dep:wayland-backend", "dep:wayland-client", "dep:wayland-protocols"]
+
+xorg-xinput2 = ["dep:x11rb"]
 
 # Windows Ink `RealTimeStylus` support
 windows-ink = ["dep:windows"]
